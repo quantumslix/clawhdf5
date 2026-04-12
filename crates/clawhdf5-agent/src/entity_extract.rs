@@ -356,7 +356,7 @@ fn extract_dates(text: &str) -> Vec<ExtractedEntity> {
 
     // Multi-word relative dates first (longest first to avoid partial matches).
     let mut sorted_rel: Vec<&str> = RELATIVE_DATES.to_vec();
-    sorted_rel.sort_by(|a, b| b.len().cmp(&a.len()));
+    sorted_rel.sort_by_key(|b| std::cmp::Reverse(b.len()));
     for rel in sorted_rel {
         let mut start = 0;
         while let Some(pos) = lower[start..].find(rel) {
@@ -433,12 +433,12 @@ fn extract_dates(text: &str) -> Vec<ExtractedEntity> {
                     // Optional ", YYYY"
                     let rest2 = text[end..].trim_start();
                     let ws2 = text[end..].len() - rest2.len();
-                    if rest2.starts_with(',') {
-                        let rest3 = rest2[1..].trim_start();
-                        if let Some(yr_len) = leading_digits_len(rest3) {
-                            if yr_len == 4 {
-                                end = end + ws2 + 1 + (rest2.len() - rest3.len()) + yr_len;
-                            }
+                    if let Some(after_comma) = rest2.strip_prefix(',') {
+                        let rest3 = after_comma.trim_start();
+                        if let Some(yr_len) = leading_digits_len(rest3)
+                            && yr_len == 4
+                        {
+                            end = end + ws2 + 1 + (after_comma.len() - rest3.len()) + yr_len;
                         }
                     }
                     results.push(ExtractedEntity {

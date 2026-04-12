@@ -101,12 +101,10 @@ impl WalFile {
 
     /// Append a save entry to the WAL.
     pub fn append_save(&mut self, entry: &WalEntry) -> Result<(), MemoryError> {
-        let f = self.file.as_mut().ok_or_else(|| {
-            MemoryError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "WAL file not open",
-            ))
-        })?;
+        let f = self
+            .file
+            .as_mut()
+            .ok_or_else(|| MemoryError::Io(std::io::Error::other("WAL file not open")))?;
         // entry_type
         f.write_all(&[WalEntryType::Save as u8])?;
         // timestamp
@@ -134,12 +132,10 @@ impl WalFile {
 
     /// Append a tombstone entry (deletion).
     pub fn append_tombstone(&mut self, index: usize, timestamp: f64) -> Result<(), MemoryError> {
-        let f = self.file.as_mut().ok_or_else(|| {
-            MemoryError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "WAL file not open",
-            ))
-        })?;
+        let f = self
+            .file
+            .as_mut()
+            .ok_or_else(|| MemoryError::Io(std::io::Error::other("WAL file not open")))?;
         f.write_all(&[WalEntryType::Tombstone as u8])?;
         f.write_all(&timestamp.to_le_bytes())?;
         f.write_all(&(index as u32).to_le_bytes())?;
@@ -243,12 +239,10 @@ impl WalFile {
 
     /// Update the entry_count in the header (seek to offset 5, write u32 LE).
     fn write_entry_count(&mut self) -> Result<(), MemoryError> {
-        let f = self.file.as_mut().ok_or_else(|| {
-            MemoryError::Io(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                "WAL file not open",
-            ))
-        })?;
+        let f = self
+            .file
+            .as_mut()
+            .ok_or_else(|| MemoryError::Io(std::io::Error::other("WAL file not open")))?;
         let pos = f.stream_position()?;
         f.seek(SeekFrom::Start(5))?;
         f.write_all(&self.entry_count.to_le_bytes())?;

@@ -159,8 +159,8 @@ impl IVFIndex {
                 }
             }
             let inv = 1.0 / actual_clusters as f32;
-            for d in 0..dim {
-                global_center[d] *= inv;
+            for gc in global_center.iter_mut() {
+                *gc *= inv;
             }
 
             for (i, vec) in vectors.iter().enumerate() {

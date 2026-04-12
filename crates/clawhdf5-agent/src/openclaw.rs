@@ -181,23 +181,23 @@ impl MarkdownParser {
         let mut body_lines: Vec<&str> = Vec::new();
 
         for (i, &line) in lines.iter().enumerate() {
-            if let Some((lvl, title)) = Self::heading_level(line) {
-                if lvl >= min_level {
-                    // Flush previous section.
-                    Self::flush_section(
-                        current_heading.take(),
-                        current_level,
-                        current_start,
-                        i.saturating_sub(1),
-                        &body_lines,
-                        &mut sections,
-                    );
-                    body_lines.clear();
-                    current_heading = Some(title.to_string());
-                    current_level = lvl;
-                    current_start = i;
-                    continue;
-                }
+            if let Some((lvl, title)) = Self::heading_level(line)
+                && lvl >= min_level
+            {
+                // Flush previous section.
+                Self::flush_section(
+                    current_heading.take(),
+                    current_level,
+                    current_start,
+                    i.saturating_sub(1),
+                    &body_lines,
+                    &mut sections,
+                );
+                body_lines.clear();
+                current_heading = Some(title.to_string());
+                current_level = lvl;
+                current_start = i;
+                continue;
             }
             body_lines.push(line);
         }
@@ -1357,7 +1357,7 @@ impl ClawhdfBackend {
     ///
     /// Returns `true` if the key existed and was removed.
     pub fn ephemeral_delete(&mut self, key: &str) -> bool {
-        self.memory.ephemeral_mut().map_or(false, |s| s.delete(key))
+        self.memory.ephemeral_mut().is_some_and(|s| s.delete(key))
     }
 
     /// Return a snapshot of ephemeral tier statistics, or `None` if the tier

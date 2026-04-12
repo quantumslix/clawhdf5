@@ -110,7 +110,7 @@ fn search_engine(engine: &ConsolidationEngine, query: &str, k: usize) -> Vec<(us
 // Latency helper
 // ---------------------------------------------------------------------------
 
-fn percentile_us(latencies_ns: &mut Vec<u64>, p: usize) -> f64 {
+fn percentile_us(latencies_ns: &mut [u64], p: usize) -> f64 {
     latencies_ns.sort_unstable();
     let idx = (p * latencies_ns.len() / 100).min(latencies_ns.len().saturating_sub(1));
     latencies_ns.get(idx).copied().unwrap_or(0) as f64 / 1000.0

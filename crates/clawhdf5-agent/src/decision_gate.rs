@@ -167,11 +167,9 @@ fn normalize(text: &str) -> String {
                 result.push(lc);
             }
             prev_space = false;
-        } else if c.is_whitespace() {
-            if !prev_space && !result.is_empty() {
-                result.push(' ');
-                prev_space = true;
-            }
+        } else if c.is_whitespace() && !prev_space && !result.is_empty() {
+            result.push(' ');
+            prev_space = true;
         }
     }
     // Trim trailing space

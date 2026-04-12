@@ -134,7 +134,7 @@ impl WriteAnomalyDetector {
         self.window.push_back(event);
         // Prune entries older than 60 seconds relative to the newest event.
         let cutoff = self.last_timestamp - 60.0;
-        while self.window.front().map_or(false, |e| e.timestamp < cutoff) {
+        while self.window.front().is_some_and(|e| e.timestamp < cutoff) {
             self.window.pop_front();
         }
     }

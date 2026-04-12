@@ -266,14 +266,14 @@ impl MemoryStrategy for SaveOnSemanticShift {
 
         // Search for similar existing memories
         let results = store.search(embedding, self.lookback_k);
-        if let Some(top) = results.first() {
-            if top.score > (1.0 - self.shift_threshold) {
-                return StrategyOutput {
-                    entries: Vec::new(),
-                    entity_updates: Vec::new(),
-                    skipped: Some(SkipReason::Duplicate),
-                };
-            }
+        if let Some(top) = results.first()
+            && top.score > (1.0 - self.shift_threshold)
+        {
+            return StrategyOutput {
+                entries: Vec::new(),
+                entity_updates: Vec::new(),
+                skipped: Some(SkipReason::Duplicate),
+            };
         }
 
         // Novel enough — save

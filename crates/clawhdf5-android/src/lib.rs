@@ -23,8 +23,12 @@ type Handle = *mut HDF5Memory;
 /// Create a new HDF5 memory file.
 ///
 /// Returns a handle on success, null on failure.
+///
+/// # Safety
+///
+/// `path` and `agent_id` must be valid, null-terminated C strings.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_create(
+pub unsafe extern "C" fn edgehdf5_create(
     path: *const c_char,
     agent_id: *const c_char,
     embedding_dim: u32,
@@ -48,8 +52,12 @@ pub extern "C" fn edgehdf5_create(
 /// Open an existing HDF5 memory file.
 ///
 /// Returns a handle on success, null on failure.
+///
+/// # Safety
+///
+/// `path` must be a valid, null-terminated C string.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_open(path: *const c_char) -> Handle {
+pub unsafe extern "C" fn edgehdf5_open(path: *const c_char) -> Handle {
     let path = match unsafe { cstr_to_string(path) } {
         Some(s) => s,
         None => return ptr::null_mut(),
@@ -62,8 +70,13 @@ pub extern "C" fn edgehdf5_open(path: *const c_char) -> Handle {
 }
 
 /// Close and free an HDF5Memory handle.
+///
+/// # Safety
+///
+/// `handle` must be a handle previously returned by [`edgehdf5_create`] or
+/// [`edgehdf5_open`], and must not be used after this call.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_close(handle: Handle) {
+pub unsafe extern "C" fn edgehdf5_close(handle: Handle) {
     if !handle.is_null() {
         unsafe { drop(Box::from_raw(handle)) };
     }
@@ -74,8 +87,14 @@ pub extern "C" fn edgehdf5_close(handle: Handle) {
 // ---------------------------------------------------------------------------
 
 /// Save a memory entry. Returns the entry index, or -1 on failure.
+///
+/// # Safety
+///
+/// - `handle` must be a valid, non-null handle.
+/// - All `*const c_char` arguments must be valid, null-terminated C strings.
+/// - `embedding_ptr` must point to at least `embedding_len` contiguous `f32` values.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_save(
+pub unsafe extern "C" fn edgehdf5_save(
     handle: Handle,
     chunk: *const c_char,
     embedding_ptr: *const f32,
@@ -126,8 +145,12 @@ pub extern "C" fn edgehdf5_save(
 }
 
 /// Get the number of active (non-deleted) entries.
+///
+/// # Safety
+///
+/// `handle` must be a valid handle or null (returns 0 if null).
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_count_active(handle: Handle) -> u64 {
+pub unsafe extern "C" fn edgehdf5_count_active(handle: Handle) -> u64 {
     match unsafe { handle.as_ref() } {
         Some(mem) => mem.count_active() as u64,
         None => 0,
@@ -135,8 +158,12 @@ pub extern "C" fn edgehdf5_count_active(handle: Handle) -> u64 {
 }
 
 /// Get the total number of entries (including tombstoned).
+///
+/// # Safety
+///
+/// `handle` must be a valid handle or null (returns 0 if null).
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_count(handle: Handle) -> u64 {
+pub unsafe extern "C" fn edgehdf5_count(handle: Handle) -> u64 {
     match unsafe { handle.as_ref() } {
         Some(mem) => mem.count() as u64,
         None => 0,
@@ -144,8 +171,12 @@ pub extern "C" fn edgehdf5_count(handle: Handle) -> u64 {
 }
 
 /// Delete a memory entry by index. Returns 0 on success, -1 on failure.
+///
+/// # Safety
+///
+/// `handle` must be a valid, non-null handle.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_delete(handle: Handle, index: u64) -> i32 {
+pub unsafe extern "C" fn edgehdf5_delete(handle: Handle, index: u64) -> i32 {
     let mem = match unsafe { handle.as_mut() } {
         Some(m) => m,
         None => return -1,
@@ -165,8 +196,16 @@ pub extern "C" fn edgehdf5_delete(handle: Handle, index: u64) -> i32 {
 ///
 /// Performs hybrid search and writes up to `max_results` entries into the
 /// provided output arrays. Returns the number of results written.
+///
+/// # Safety
+///
+/// - `handle` must be a valid, non-null handle.
+/// - `query_text` must be a valid, null-terminated C string.
+/// - `query_embedding_ptr` must point to at least `query_embedding_len` `f32` values.
+/// - `out_indices` and `out_scores` must point to arrays of at least `max_results` elements.
+/// - `out_chunks` must be null or point to an array of at least `max_results` pointers.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_hybrid_search(
+pub unsafe extern "C" fn edgehdf5_hybrid_search(
     handle: Handle,
     query_embedding_ptr: *const f32,
     query_embedding_len: u32,
@@ -215,8 +254,13 @@ pub extern "C" fn edgehdf5_hybrid_search(
 }
 
 /// Free a chunk string returned by hybrid search.
+///
+/// # Safety
+///
+/// `s` must be a pointer previously returned by [`edgehdf5_hybrid_search`]
+/// via `out_chunks`, or null.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_free_string(s: *mut c_char) {
+pub unsafe extern "C" fn edgehdf5_free_string(s: *mut c_char) {
     if !s.is_null() {
         unsafe { drop(CString::from_raw(s)) };
     }
@@ -227,8 +271,13 @@ pub extern "C" fn edgehdf5_free_string(s: *mut c_char) {
 // ---------------------------------------------------------------------------
 
 /// Add a session entry. Returns 0 on success, -1 on failure.
+///
+/// # Safety
+///
+/// - `handle` must be a valid, non-null handle.
+/// - All `*const c_char` arguments must be valid, null-terminated C strings.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_add_session(
+pub unsafe extern "C" fn edgehdf5_add_session(
     handle: Handle,
     id: *const c_char,
     start_idx: u64,
@@ -267,8 +316,13 @@ pub extern "C" fn edgehdf5_add_session(
 
 /// Get a session summary by ID. Returns a C string (caller must free with
 /// `edgehdf5_free_string`), or null if not found.
+///
+/// # Safety
+///
+/// - `handle` must be a valid handle or null.
+/// - `session_id` must be a valid, null-terminated C string.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_get_session_summary(
+pub unsafe extern "C" fn edgehdf5_get_session_summary(
     handle: Handle,
     session_id: *const c_char,
 ) -> *mut c_char {
@@ -295,8 +349,13 @@ pub extern "C" fn edgehdf5_get_session_summary(
 // ---------------------------------------------------------------------------
 
 /// Add a knowledge graph entity. Returns entity ID, or -1 on failure.
+///
+/// # Safety
+///
+/// - `handle` must be a valid, non-null handle.
+/// - `name` and `entity_type` must be valid, null-terminated C strings.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_add_entity(
+pub unsafe extern "C" fn edgehdf5_add_entity(
     handle: Handle,
     name: *const c_char,
     entity_type: *const c_char,
@@ -322,8 +381,13 @@ pub extern "C" fn edgehdf5_add_entity(
 }
 
 /// Add a knowledge graph relation. Returns 0 on success, -1 on failure.
+///
+/// # Safety
+///
+/// - `handle` must be a valid, non-null handle.
+/// - `relation` must be a valid, null-terminated C string.
 #[unsafe(no_mangle)]
-pub extern "C" fn edgehdf5_add_relation(
+pub unsafe extern "C" fn edgehdf5_add_relation(
     handle: Handle,
     src: u64,
     tgt: u64,

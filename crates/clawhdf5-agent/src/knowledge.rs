@@ -18,7 +18,7 @@ pub enum RelationType {
 
 impl RelationType {
     /// Convert a string label to a `RelationType`.
-    pub fn from_str(s: &str) -> Self {
+    pub fn from_label(s: &str) -> Self {
         match s {
             "temporal" => RelationType::Temporal,
             "causal" => RelationType::Causal,
@@ -364,11 +364,11 @@ impl KnowledgeCache {
                 .collect();
 
             for neighbour_id in neighbours {
-                if visited.insert(neighbour_id) {
-                    if let Some(entity) = self.get_entity(neighbour_id) {
-                        results.push((entity.clone(), depth + 1));
-                        queue.push_back((neighbour_id, depth + 1));
-                    }
+                if visited.insert(neighbour_id)
+                    && let Some(entity) = self.get_entity(neighbour_id)
+                {
+                    results.push((entity.clone(), depth + 1));
+                    queue.push_back((neighbour_id, depth + 1));
                 }
             }
         }
@@ -764,21 +764,21 @@ mod tests {
 
     #[test]
     fn test_relation_type_from_str_known_variants() {
-        assert_eq!(RelationType::from_str("temporal"), RelationType::Temporal);
-        assert_eq!(RelationType::from_str("causal"), RelationType::Causal);
+        assert_eq!(RelationType::from_label("temporal"), RelationType::Temporal);
+        assert_eq!(RelationType::from_label("causal"), RelationType::Causal);
         assert_eq!(
-            RelationType::from_str("associative"),
+            RelationType::from_label("associative"),
             RelationType::Associative
         );
         assert_eq!(
-            RelationType::from_str("hierarchical"),
+            RelationType::from_label("hierarchical"),
             RelationType::Hierarchical
         );
     }
 
     #[test]
     fn test_relation_type_custom() {
-        let rt = RelationType::from_str("something_else");
+        let rt = RelationType::from_label("something_else");
         assert_eq!(rt, RelationType::Custom("something_else".to_string()));
         assert_eq!(rt.as_str(), "something_else");
     }
@@ -793,7 +793,7 @@ mod tests {
             RelationType::Custom("my_type".to_string()),
         ];
         for v in &variants {
-            assert_eq!(RelationType::from_str(v.as_str()), *v);
+            assert_eq!(RelationType::from_label(v.as_str()), *v);
         }
     }
 

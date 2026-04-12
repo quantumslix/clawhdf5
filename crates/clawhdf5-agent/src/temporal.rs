@@ -237,7 +237,7 @@ impl TemporalReRanker {
     /// - `result_timestamp` — the timestamp of the candidate record.
     /// - `query_hint`       — the caller's temporal preference.
     /// - `now`              — the current wall-clock timestamp (same units as
-    ///                        all other timestamps in the system).
+    ///   all other timestamps in the system).
     pub fn temporal_boost(result_timestamp: f64, query_hint: &TemporalHint, now: f64) -> f32 {
         match query_hint {
             TemporalHint::None => 0.0,

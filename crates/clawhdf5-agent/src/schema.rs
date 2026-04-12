@@ -498,11 +498,11 @@ fn load_knowledge_group(file: &clawhdf5::File) -> Result<KnowledgeCache, MemoryE
     }
 
     // Load aliases (default to empty for backward compat)
-    if let Ok(alias_strings) = read_string_dataset_from_group(&group, "alias_strings") {
-        if let Ok(alias_entity_ids) = read_i64_dataset(&group, "alias_entity_ids") {
-            cache.alias_strings = alias_strings;
-            cache.alias_entity_ids = alias_entity_ids;
-        }
+    if let Ok(alias_strings) = read_string_dataset_from_group(&group, "alias_strings")
+        && let Ok(alias_entity_ids) = read_i64_dataset(&group, "alias_entity_ids")
+    {
+        cache.alias_strings = alias_strings;
+        cache.alias_entity_ids = alias_entity_ids;
     }
 
     Ok(cache)
