@@ -347,6 +347,48 @@ impl HDF5Memory {
     }
 }
 
+impl HDF5Memory {
+    /// Upsert: if an active entry with the same tags (key) exists, update it in-place.
+    /// Otherwise append a new entry. Use this for key-based memory stores where
+    /// the same key should not create duplicates.
+    pub fn save_or_update(&mut self, entry: MemoryEntry) -> Result<usize> {
+        if let Some(existing_idx) = self.cache.find_by_tags(&entry.tags) {
+            if let Some(ref mut w) = self.wal {
+                let wal_entry = wal::WalEntry {
+                    entry_type: wal::WalEntryType::Save,
+                    timestamp: entry.timestamp,
+                    chunk: entry.chunk.clone(),
+                    embedding: entry.embedding.clone(),
+                    source_channel: entry.source_channel.clone(),
+                    session_id: entry.session_id.clone(),
+                    tags: entry.tags.clone(),
+                    tombstone_index: None,
+                };
+                w.append_save(&wal_entry)?;
+            }
+            self.cache.update(
+                existing_idx,
+                entry.chunk,
+                entry.embedding,
+                entry.source_channel,
+                entry.timestamp,
+                entry.session_id,
+            );
+            if self.wal.is_some() {
+                if self.wal.as_ref().unwrap().pending_count() as usize > self.config.wal_max_entries {
+                    self.flush()?;
+                    self.wal.as_mut().unwrap().truncate()?;
+                }
+            } else {
+                self.flush()?;
+            }
+            return Ok(existing_idx);
+        }
+        // No existing entry — fall through to regular save
+        AgentMemory::save(self, entry)
+    }
+}
+
 impl AgentMemory for HDF5Memory {
     fn save(&mut self, entry: MemoryEntry) -> Result<usize> {
         if let Some(ref mut w) = self.wal {

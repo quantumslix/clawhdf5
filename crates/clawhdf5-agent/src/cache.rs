@@ -73,6 +73,42 @@ impl MemoryCache {
         idx
     }
 
+    /// Find an active (non-tombstoned) entry by tags (used as key for dedup).
+    /// Returns the index of the first matching active entry, or None.
+    pub fn find_by_tags(&self, tags: &str) -> Option<usize> {
+        if tags.is_empty() {
+            return None;
+        }
+        for (i, t) in self.tags.iter().enumerate() {
+            if self.tombstones.get(i).copied().unwrap_or(1) == 0 && t == tags {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    /// Update an existing entry in-place (for upsert dedup).
+    pub fn update(
+        &mut self,
+        idx: usize,
+        chunk: String,
+        embedding: Vec<f32>,
+        source_channel: String,
+        timestamp: f64,
+        session_id: String,
+    ) {
+        if idx < self.chunks.len() {
+            let norm = vector_search::compute_norm(&embedding);
+            self.chunks[idx] = chunk;
+            self.embeddings[idx] = embedding;
+            self.source_channels[idx] = source_channel;
+            self.timestamps[idx] = timestamp;
+            self.session_ids[idx] = session_id;
+            self.norms[idx] = norm;
+            self.activation_weights[idx] = 1.0; // reset activation on update
+        }
+    }
+
     /// Mark an entry as deleted (tombstoned).
     pub fn mark_deleted(&mut self, id: usize) -> bool {
         if id < self.tombstones.len() && self.tombstones[id] == 0 {
