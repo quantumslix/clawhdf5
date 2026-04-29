@@ -1296,7 +1296,9 @@ impl HDF5Memory {
         let strat = self
             .strategy
             .as_ref()
-            .expect("call set_strategy() before record()");
+            .ok_or_else(|| MemoryError::Schema(
+                "strategy not initialized: call set_strategy() before record()".to_owned(),
+            ))?;
         let view = memory_strategy::CacheStoreView::new(&self.cache, &self.knowledge);
         let output = strat.evaluate(&exchange, &view);
         for e in &output.entries {
