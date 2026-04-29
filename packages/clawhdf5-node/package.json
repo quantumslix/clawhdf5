@@ -2,8 +2,8 @@
   "name": "@redclaw/clawhdf5",
   "version": "2.0.0",
   "description": "Node.js bindings for clawhdf5 — HDF5-backed agent memory with hippocampal consolidation",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -28,8 +28,8 @@
     }
   },
   "scripts": {
-    "build": "napi build --platform --release --manifest-path ../../crates/clawhdf5-napi/Cargo.toml",
-    "build:debug": "napi build --platform --manifest-path ../../crates/clawhdf5-napi/Cargo.toml",
+    "build": "napi build --platform --release --cargo-cwd ../../crates/clawhdf5-napi",
+    "build:debug": "napi build --platform --cargo-cwd ../../crates/clawhdf5-napi",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "jest",
     "typecheck": "tsc --noEmit"
