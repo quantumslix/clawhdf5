@@ -500,6 +500,29 @@ impl ClawhdfBackend {
     pub fn wal_pending_count(&self) -> usize {
         self.memory.wal_pending_count()
     }
+
+    /// Store a single [] directly in the HDF5 backend, bypassing
+    /// Markdown parsing.
+    ///
+    ///  may be empty — if so the entry is stored without a vector
+    /// and will only participate in text-based recall.  Returns the record
+    /// index assigned by the store.
+    ///
+    /// Addresses the Node.js integration request in issue #10: callers can
+    /// now supply pre-computed embeddings without going through the Markdown parser.
+    pub fn save_entry(&mut self, entry: MemoryEntry) -> Result<usize, String> {
+        AgentMemory::save(&mut self.memory, entry).map_err(|e| e.to_string())
+    }
+
+    /// Store a batch of [] records atomically.
+    ///
+    /// Returns one record index per input entry in the same order.
+    pub fn save_batch_entries(
+        &mut self,
+        entries: Vec<MemoryEntry>,
+    ) -> Result<Vec<usize>, String> {
+        AgentMemory::save_batch(&mut self.memory, entries).map_err(|e| e.to_string())
+    }
 }
 
 impl MemoryBackend for ClawhdfBackend {
