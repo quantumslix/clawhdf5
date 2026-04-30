@@ -104,6 +104,29 @@ pub struct ConsolidationStats {
 /// mem.write('memory/user.md', '# Goals\n\nLearn Rust.');
 /// const results = mem.search('Rust', new Float32Array(768), 5);
 /// ```
+/// Input accepted by [] and [].
+///
+/// Mirrors [] with JS-compatible types.
+/// Addresses issue #10: Node.js callers can now write embedding-aware records
+/// directly without shelling out to the CLI binary.
+#[napi(object)]
+pub struct MemoryEntryInput {
+    /// The text chunk to store.
+    pub chunk: String,
+    /// Pre-computed embedding vector.  Length must match the store's
+    /// , or pass  / empty array to store without a
+    /// vector (text-only recall).
+    pub embedding: Option<Vec<f64>>,
+    /// Source identifier, e.g. , , .
+    pub source_channel: String,
+    /// Unix-epoch seconds.  Pass  to use the current wall-clock time.
+    pub timestamp: Option<f64>,
+    /// Session identifier (e.g. a UUID or a human-readable label).
+    pub session_id: String,
+    /// Comma-separated tags, e.g. .
+    pub tags: String,
+}
+
 #[napi]
 pub struct ClawhdfMemory {
     inner: ClawhdfBackend,
@@ -356,6 +379,72 @@ impl ClawhdfMemory {
         self.inner
             .promote_ephemeral(min_access_count.unwrap_or(3))
             .map(|n| n as u32)
+            .map_err(napi::Error::from_reason)
+    }
+
+    // ── Raw MemoryEntry write ─────────────────────────────────────────────────
+
+    /// Store a single [] record directly in the HDF5 backend.
+    ///
+    /// Unlike , this method lets callers supply pre-computed
+    /// embeddings and fine-grained metadata.  Addresses issue #10.
+    ///
+    /// Returns the record index assigned by the store.
+    #[napi]
+    pub fn save(&mut self, entry: MemoryEntryInput) -> napi::Result<u32> {
+        use clawhdf5_agent::MemoryEntry;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs_f64();
+        let me = MemoryEntry {
+            chunk: entry.chunk,
+            embedding: entry
+                .embedding
+                .unwrap_or_default()
+                .into_iter()
+                .map(|x| x as f32)
+                .collect(),
+            source_channel: entry.source_channel,
+            timestamp: entry.timestamp.unwrap_or(now),
+            session_id: entry.session_id,
+            tags: entry.tags,
+        };
+        self.inner
+            .save_entry(me)
+            .map(|n| n as u32)
+            .map_err(napi::Error::from_reason)
+    }
+
+    /// Store a batch of [] records in a single call.
+    ///
+    /// Returns one record index per entry in the same order as the input.
+    #[napi]
+    pub fn save_batch(&mut self, entries: Vec<MemoryEntryInput>) -> napi::Result<Vec<u32>> {
+        use clawhdf5_agent::MemoryEntry;
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs_f64();
+        let mes: Vec<MemoryEntry> = entries
+            .into_iter()
+            .map(|e| MemoryEntry {
+                chunk: e.chunk,
+                embedding: e
+                    .embedding
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|x| x as f32)
+                    .collect(),
+                source_channel: e.source_channel,
+                timestamp: e.timestamp.unwrap_or(now),
+                session_id: e.session_id,
+                tags: e.tags,
+            })
+            .collect();
+        self.inner
+            .save_batch_entries(mes)
+            .map(|v| v.into_iter().map(|n| n as u32).collect())
             .map_err(napi::Error::from_reason)
     }
 }
