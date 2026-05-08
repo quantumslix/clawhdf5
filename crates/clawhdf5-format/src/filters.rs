@@ -397,7 +397,7 @@ mod tests {
         // Compress data and verify it decompresses correctly
         let data = vec![0u8, 1, 2, 3, 4, 5, 6, 7, 8, 9];
         let compressed = deflate_compress(&data, 6).unwrap();
-        assert!(compressed.len() > 0);
+        assert!(!compressed.is_empty());
         let decompressed = deflate_decompress(&compressed).unwrap();
         assert_eq!(decompressed, data);
     }

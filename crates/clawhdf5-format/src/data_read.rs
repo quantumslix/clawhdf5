@@ -1835,7 +1835,7 @@ mod tests {
     fn read_as_f64_zerocopy_aligned() {
         let dt = make_f64_le_type();
         // Create aligned data — Vec<f64> guarantees 8-byte alignment
-        let values = vec![1.0f64, 2.0, 3.0, 4.0];
+        let values = [1.0f64, 2.0, 3.0, 4.0];
         let raw: &[u8] =
             // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
 
@@ -1851,7 +1851,7 @@ mod tests {
     #[test]
     fn read_as_f64_zerocopy_wrong_type() {
         let dt = make_i32_le_type();
-        let values = vec![1.0f64; 4];
+        let values = [1.0f64; 4];
         let raw: &[u8] =
             // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
 
@@ -1872,7 +1872,7 @@ mod tests {
             mantissa_size: 52,
             exponent_bias: 1023,
         };
-        let values = vec![1.0f64; 4];
+        let values = [1.0f64; 4];
         let raw: &[u8] =
             // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
 
@@ -1900,7 +1900,7 @@ mod tests {
             mantissa_size: 23,
             exponent_bias: 127,
         };
-        let values = vec![1.5f32, 2.5, 3.5];
+        let values = [1.5f32, 2.5, 3.5];
         let raw: &[u8] =
             // SAFETY: values is a valid slice; reinterpreting as u8 bytes is always safe.
 
