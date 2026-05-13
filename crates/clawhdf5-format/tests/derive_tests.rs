@@ -317,14 +317,13 @@ fn roundtrip_through_file_writer() {
         if msg.msg_type == clawhdf5_format::message_type::MessageType::Link {
             let link = clawhdf5_format::link_message::LinkMessage::parse(&msg.data, sb.offset_size)
                 .unwrap();
-            if link.name == "compound_ds" {
-                if let clawhdf5_format::link_message::LinkTarget::Hard {
+            if link.name == "compound_ds"
+                && let clawhdf5_format::link_message::LinkTarget::Hard {
                     object_header_address,
                 } = link.link_target
                 {
                     ds_addr = Some(object_header_address);
                 }
-            }
         }
     }
     let ds_addr = ds_addr.expect("compound_ds link not found");

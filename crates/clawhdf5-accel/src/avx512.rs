@@ -13,7 +13,7 @@ use std::arch::x86_64::*;
 /// Caller must verify is_x86_feature_detected!("avx512f").
 // SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
-pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
+pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 { unsafe {
     assert_eq!(a.len(), b.len());
     let len = a.len();
     let mut i = 0;
@@ -48,7 +48,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
     }
 
     sum
-}
+}}
 
 /// AVX-512 cosine similarity — fused single pass.
 ///
@@ -56,7 +56,7 @@ pub unsafe fn dot_product(a: &[f32], b: &[f32]) -> f32 {
 /// Caller must verify is_x86_feature_detected!("avx512f").
 // SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
-pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 { unsafe {
     assert_eq!(a.len(), b.len());
     let len = a.len();
     let mut i = 0;
@@ -87,7 +87,7 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 
     let denom = (norm_a * norm_b).sqrt();
     if denom == 0.0 { 0.0 } else { dot / denom }
-}
+}}
 
 /// AVX-512 L2 distance.
 ///
@@ -95,7 +95,7 @@ pub unsafe fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
 /// Caller must verify is_x86_feature_detected!("avx512f").
 // SAFETY: Caller must have verified avx512f via is_x86_feature_detected!.
 #[target_feature(enable = "avx512f")]
-pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
+pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 { unsafe {
     assert_eq!(a.len(), b.len());
     let len = a.len();
     let mut i = 0;
@@ -118,4 +118,4 @@ pub unsafe fn l2_distance(a: &[f32], b: &[f32]) -> f32 {
     }
 
     sum.sqrt()
-}
+}}

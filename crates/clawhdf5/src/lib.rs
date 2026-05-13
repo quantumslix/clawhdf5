@@ -494,10 +494,7 @@ mod tests {
         let file = File::open(&path).unwrap();
         let ds = file.dataset("data").unwrap();
 
-        match ds.read_f32_zerocopy() {
-            Ok(slice) => assert_eq!(slice, &original[..]),
-            Err(_) => {}
-        }
+        if let Ok(slice) = ds.read_f32_zerocopy() { assert_eq!(slice, &original[..]) }
         assert_eq!(ds.read_f32().unwrap(), original);
 
         std::fs::remove_file(&path).ok();
@@ -520,14 +517,11 @@ mod tests {
         let ds = file.dataset("data").unwrap();
         let regular = ds.read_f64().unwrap();
 
-        match ds.read_f64_zerocopy() {
-            Ok(zc) => {
-                assert_eq!(zc.len(), regular.len());
-                for (a, b) in zc.iter().zip(regular.iter()) {
-                    assert_eq!(a, b);
-                }
+        if let Ok(zc) = ds.read_f64_zerocopy() {
+            assert_eq!(zc.len(), regular.len());
+            for (a, b) in zc.iter().zip(regular.iter()) {
+                assert_eq!(a, b);
             }
-            Err(_) => {}
         }
 
         std::fs::remove_file(&path).ok();

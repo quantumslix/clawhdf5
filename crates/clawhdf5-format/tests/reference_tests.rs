@@ -210,14 +210,13 @@ print('ok')
         if msg.msg_type == clawhdf5_format::message_type::MessageType::Link {
             let link = clawhdf5_format::link_message::LinkMessage::parse(&msg.data, sb.offset_size)
                 .unwrap();
-            if link.name == "refs" {
-                if let clawhdf5_format::link_message::LinkTarget::Hard {
+            if link.name == "refs"
+                && let clawhdf5_format::link_message::LinkTarget::Hard {
                     object_header_address,
                 } = link.link_target
                 {
                     refs_addr = Some(object_header_address);
                 }
-            }
         }
     }
 

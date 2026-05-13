@@ -650,7 +650,7 @@ mod tests {
         // Wait, max_heap_size=16, ceil(16/8)=2. Header = sig(4)+ver(1)+addr(8)+bo(2) = 15.
         // The data was placed at data_start = block_addr + 15.
         // Since offset is from block start, the object is at offset 15 within the block.
-        let dblock_header_size = 5 + 8 + ((hdr.max_heap_size as usize + 7) / 8); // 15
+        let dblock_header_size = 5 + 8 + (hdr.max_heap_size as usize).div_ceil(8); // 15
         let offset: u64 = dblock_header_size as u64;
         let length: u64 = 13;
         let payload = offset | (length << hdr.max_heap_size);

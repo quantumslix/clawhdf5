@@ -1400,7 +1400,7 @@ fn superblock_v3_written_files() {
 #[test]
 fn write_roundtrip_large_chunked_i32() {
     let mut fw = FileWriter::new();
-    let data: Vec<i32> = (0..5000).map(|i| i).collect();
+    let data: Vec<i32> = (0..5000).collect();
     fw.create_dataset("big")
         .with_i32_data(&data)
         .with_shape(&[5000])
